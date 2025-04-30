@@ -6,8 +6,7 @@
 
 #define DHTPIN 27 
 #define DHTTYPE DHT22
-#define MQ2_ANALOG_PIN 34
-#define MQ2_DIGITAL_PIN 12
+#define MQ2 35
 #define BUZZER_PIN 12
 #define LED 17
 
@@ -32,8 +31,6 @@ void setup()
   LCD.print("WiFi ");
 
   dht.begin();
-  pinMode(MQ2_DIGITAL_PIN, INPUT);
-  pinMode(MQ2_ANALOG_PIN, INPUT);
   pinMode(LED, OUTPUT);
 
   WiFi.begin(WIFI_NAME, WIFI_PASSWORD);
@@ -59,7 +56,7 @@ void setup()
 
 void loop(){
 
-  int gas = analogRead(MQ2_ANALOG_PIN);
+  int gas = analogRead(MQ2);
   float humidity = dht.readHumidity();
   float temp = dht.readTemperature();
 
@@ -102,7 +99,7 @@ void loop(){
 
   // Gás
   LCD.clear();
-  if (gas >= 500) {
+  if (gas >= 3500) {
     tone(BUZZER_PIN, 1000);             
     digitalWrite(LED, LOW);
     Serial.print(gas);
@@ -133,5 +130,5 @@ void loop(){
   ThingSpeak.setField(3, gas);
   int x = ThingSpeak.writeFields(channelID, Key);
   Serial.println("");
-  delay(1000);
+  delay(2000);
 }
