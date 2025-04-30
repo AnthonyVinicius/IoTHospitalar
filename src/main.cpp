@@ -7,8 +7,9 @@
 #define DHTPIN 27 
 #define DHTTYPE DHT22
 #define MQ2_ANALOG_PIN 34
-#define MQ2_DIGITAL_PIN 21
+#define MQ2_DIGITAL_PIN 12
 #define BUZZER_PIN 12
+#define LED 17
 
 const char* WIFI_NAME = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
@@ -33,6 +34,7 @@ void setup()
   dht.begin();
   pinMode(MQ2_DIGITAL_PIN, INPUT);
   pinMode(MQ2_ANALOG_PIN, INPUT);
+  pinMode(LED, OUTPUT);
 
   WiFi.begin(WIFI_NAME, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED){
@@ -57,19 +59,26 @@ void setup()
 
 void loop(){
 
-  int conce = digitalRead(MQ2_DIGITAL_PIN);
   int gas = analogRead(MQ2_ANALOG_PIN);
   float humidity = dht.readHumidity();
   float temp = dht.readTemperature();
 
   // Temp
   LCD.clear();
+  digitalWrite(LED, HIGH);
   if (temp > 30){
     Serial.print(temp);
-    tone(BUZZER_PIN, 1000);
-    delay(2000);             
-    noTone(BUZZER_PIN);
+    tone(BUZZER_PIN, 1000);          
+    digitalWrite(LED, LOW);
     Serial.println("C°: - ALERTA: Temperatura alta detectada!");
+    LCD.setCursor(0, 0);
+    LCD.print("ALERT");
+    LCD.setCursor(0, 1);
+    LCD.print("HIGH TEMP");
+    LCD.setCursor(0, 2);
+    LCD.println("TEMP C:" + String(temp));
+    noTone(BUZZER_PIN);
+    delay(5000);
   }
   else if (temp >= 17 && temp <= 30){
     Serial.print(temp);
@@ -77,35 +86,46 @@ void loop(){
   }
   else{
     Serial.print(temp);
-    tone(BUZZER_PIN, 1000);
-    delay(2000);             
-    noTone(BUZZER_PIN);
+    tone(BUZZER_PIN, 1000);             
+    
+    digitalWrite(LED, LOW);
     Serial.println("C°: - Temperatura abaixo do indicado");
+    LCD.setCursor(0, 0);
+    LCD.println("ALERT");
+    LCD.setCursor(0, 1);
+    LCD.println("LOW TEMP");
+    LCD.setCursor(0, 2);
+    LCD.println("TEMP C:" + String(temp));
+    noTone(BUZZER_PIN);
+    delay(5000);
   }
-  LCD.setCursor(0, 0);
-  LCD.println("Temp C:" + String(temp));
-  LCD.setCursor(0, 1);
-  LCD.println("Umid:" + String(humidity));
-  
 
   // Gás
-  if (gas > 300) {
-    Serial.print(gas);
-    tone(BUZZER_PIN, 1000);
-    delay(2000);             
-    noTone(BUZZER_PIN);
-    Serial.println("pp: ALERTA! Gás detectado no ambiente.");
-  } 
-  else if (gas >= 500) {
+  LCD.clear();
+  if (gas >= 500) {
+    tone(BUZZER_PIN, 1000);             
+    digitalWrite(LED, LOW);
     Serial.print(gas);
     Serial.println("pp: Alerta! Nível elevado de gás. Contate o suporte.");
+    LCD.setCursor(0, 0);
+    LCD.println("ALERT");
+    LCD.setCursor(0, 1);
+    LCD.println("HIGH CONCE GAS");
+    LCD.setCursor(0, 2);
+    LCD.println("GAS pp:" + String(gas));
+    noTone(BUZZER_PIN);
+    delay(2000);
   } 
   else {
     Serial.print(gas);
     Serial.println("pp: Nenhum gás detectado.");
   }
+  LCD.setCursor(0, 0);
+  LCD.println("TEMP C:" + String(temp));
+  LCD.setCursor(0, 1);
+  LCD.println("UMID:" + String(humidity));
   LCD.setCursor(0, 2);
-  LCD.println("Gas " + String(temp) + "pp");
+  LCD.println("GAS " + String(gas) + "pp");
  
 
   ThingSpeak.setField(1, temp);
@@ -113,5 +133,5 @@ void loop(){
   ThingSpeak.setField(3, gas);
   int x = ThingSpeak.writeFields(channelID, Key);
   Serial.println("");
-  delay(2000);
+  delay(1000);
 }
